@@ -37,14 +37,19 @@ function MovieDetails() {
                 </div>
             ) : (
                 <div className="movie-details">
-                    <h2>{movie?.title}</h2>
-                    <p>{movie?.overview}</p>
-                    <p>{movie?.release_date?.split('-')[0]}</p>
-                    <p>{movie?.runtime}</p>
-                    <p>{movie?.vote_average}</p>
-                    <p>{movie?.vote_count}</p>
-                    <p>{movie?.genres.map((genre) => genre.name).join(', ')}</p>
-                    <p>{movie?.production_companies.map((company) => company.name).join(', ')}</p>
+                    <div className="movie-poster">
+                        <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
+                    </div>
+                    <div className="movie-info">
+                        <h2>{movie?.title}</h2>
+                        <p>{movie?.overview}</p>
+                        <p>{movie?.release_date?.split('-')[0]}</p>
+                        <p>{movie?.runtime}</p>
+                        <p>{movie?.vote_average}</p>
+                        <p>{movie?.vote_count}</p>
+                        <p>{movie?.genres.map((genre) => genre.name).join(', ')}</p>
+                        <p>{movie?.production_companies.map((company) => company.name).join(', ')}</p>
+                    </div>
                 </div>
             )}
         </>

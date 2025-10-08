@@ -1,6 +1,6 @@
 .navbar {
     background-color: #000000;
-    padding: 1rem 2rem;
+    padding: 1rem 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: fixed;
     top: 0;
@@ -9,7 +9,7 @@
     width: 100%;
     max-height: 72px;
     @media (max-width: 768px) {
-        padding: 1rem;
+        padding: 1rem 0;
     }
 }
 
@@ -43,6 +43,7 @@
     gap: 2rem;
     @media (max-width: 768px) {
         gap: 1rem;
+        display: none;
     }
 }
 
@@ -61,3 +62,31 @@
     }
 }
 
+.burger-btn {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    &.active {
+        .burger-btn-line:nth-child(1) {
+            transform: rotate(45deg) translate(4px, 3px);
+            transform-origin: center;
+        }
+        .burger-btn-line:nth-child(2) {
+            display: none;
+        }
+        .burger-btn-line:nth-child(3) {
+            transform: rotate(-45deg) translate(3px, -3px);
+            transform-origin: center;
+        }
+    }
+    @media (max-width: 768px) {
+        display: flex;
+    }
+    .burger-btn-line {
+        width: 30px;
+        height: 2px;
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+    }
+}
