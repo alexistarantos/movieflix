@@ -2,7 +2,8 @@ import MovieCard from '../components/MovieCard'
 import LoadingMovieCard from '../components/LoadingMovieCard'
 import { useState, useEffect, useRef } from 'react'
 import '../css/Home.scss'
-import { getPopularMovies, getSortedMovies, getCategoriesWithPosters } from '../services/api'
+import { getPopularMovies, getSortedMovies } from '../services/api'
+import GenresCarousel from '../components/GenresCarousel'
 
 function Home() {
 
@@ -12,7 +13,6 @@ function Home() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [sort, setSort] = useState('popular')
-    const [categories, setCategories] = useState([])
     const searchInputRef = useRef(null)
     const sortSelectRef = useRef(null)
 
@@ -35,16 +35,6 @@ function Home() {
         }
 
         loadPopularMovies()
-        const loadCategories = async () => {
-            try {
-                const categories = await getCategoriesWithPosters()
-                setCategories(categories.genres)
-            } catch (error) {
-                console.error('Error loading categories:', error)
-            }
-        }
-        loadCategories()
-
 
     }, [])
 
@@ -106,6 +96,8 @@ function Home() {
     return (
         <div className="home">
 
+            <GenresCarousel/>
+
             <div className="filters-row">
                 <select ref={sortSelectRef} name="sort" id="sort" onChange={handleSortChange} className="sort-select">
                     <option value="popularity.desc">Most Popular</option>
@@ -124,29 +116,6 @@ function Home() {
             </div>
 
             {error && <div className="error-message">Error: {error}</div>}
-
-            {categories.length > 0 && (
-                <div className="categories-section">
-                    <div className="categories-grid">
-                        {categories.map((category) => (
-                            <div key={category.id} className="category-card">
-                                {category.poster_path ? (
-                                    <img 
-                                        src={`https://image.tmdb.org/t/p/w500${category.poster_path}`}
-                                        alt={`${category.name} genre`}
-                                        className="category-poster"
-                                    />
-                                ) : (
-                                    <div className="category-placeholder">
-                                        <span>{category.name.charAt(0)}</span>
-                                    </div>
-                                )}
-                                <h3 className="category-name">{category.name}</h3>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         
             {loading ? (
                 <div className="movies-grid">
