@@ -64,8 +64,7 @@ export const getMovieDetails = async (movieId) => {
     return data
 }
 
-
-export const getCategories = async () => {
+export const getGenres = async () => {
     const response = await fetch(`${BASE_URL}/genre/movie/list?api_key=${API_KEY}`)
     const data = await response.json()
     return data

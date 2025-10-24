@@ -13,7 +13,6 @@ function GenresCarousel() {
         const loadCategories = async () => {
             try {
                 const categories = await getCategoriesWithPosters()
-                console.log(categories)
                 setCategories(categories.genres)
             } catch (error) {
                 console.error('Error loading categories:', error)
