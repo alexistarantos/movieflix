@@ -63,3 +63,74 @@ export const getMovieDetails = async (movieId) => {
     const data = await response.json()
     return data
 }
+
+
+export const getCategories = async () => {
+    const response = await fetch(`${BASE_URL}/genre/movie/list?api_key=${API_KEY}`)
+    const data = await response.json()
+    return data
+}
+
+export const getMoviesByGenre = async (genreId, page = 1) => {
+    const response = await fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=${page}`)
+    const data = await response.json()
+    return data.results
+}
+
+// Helper function to get categories with posters - AI GENERATED
+export const getCategoriesWithPosters = async () => {
+    try {
+        // Get all genres
+        const genresResponse = await fetch(`${BASE_URL}/genre/movie/list?api_key=${API_KEY}`)
+        const genresData = await genresResponse.json()
+        
+        // Track used movie IDs to avoid duplicates
+        const usedMovieIds = new Set()
+        const categoriesWithPosters = []
+        
+        // Process genres sequentially to avoid duplicate posters
+        for (const genre of genresData.genres) {
+            try {
+                // Try multiple pages to find a unique movie
+                let movieWithPoster = null
+                let page = 1
+                const maxPages = 3 // Limit to avoid too many API calls
+                
+                while (!movieWithPoster && page <= maxPages) {
+                    const moviesResponse = await fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genre.id}&sort_by=popularity.desc&page=${page}`)
+                    const moviesData = await moviesResponse.json()
+                    
+                    // Find first movie with poster that hasn't been used
+                    movieWithPoster = moviesData.results.find(movie => 
+                        movie.poster_path && !usedMovieIds.has(movie.id)
+                    )
+                    
+                    if (movieWithPoster) {
+                        usedMovieIds.add(movieWithPoster.id)
+                    }
+                    
+                    page++
+                }
+                
+                categoriesWithPosters.push({
+                    ...genre,
+                    poster_path: movieWithPoster?.poster_path || null,
+                    backdrop_path: movieWithPoster?.backdrop_path || null
+                })
+                
+            } catch (error) {
+                console.error(`Error fetching poster for genre ${genre.name}:`, error)
+                categoriesWithPosters.push({
+                    ...genre,
+                    poster_path: null,
+                    backdrop_path: null
+                })
+            }
+        }
+        
+        return { genres: categoriesWithPosters }
+    } catch (error) {
+        console.error('Error fetching categories with posters:', error)
+        throw error
+    }
+}
