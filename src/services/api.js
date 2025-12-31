@@ -3,10 +3,15 @@
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY
 const BASE_URL = 'https://api.themoviedb.org/3'
 
-export const getPopularMovies = async () => {
-    const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`)
+export const getPopularMovies = async (page = 1) => {
+    const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`)
     const data = await response.json()
-    return data.results
+    return {
+        results: data.results,
+        totalPages: data.total_pages,
+        currentPage: data.page,
+        totalResults: data.total_results
+    }
 }
 
 export const searchMovies = async (query, sort = 'popularity.desc') => {
@@ -20,19 +25,34 @@ export const searchMovies = async (query, sort = 'popularity.desc') => {
     return data.results
 }
 
-export const getSortedMovies = async (sort = 'popularity.desc', query = '') => {
+export const getSortedMovies = async (sort = 'popularity.desc', query = '', page = 1) => {
     let response;
     
     if (query.trim()) {
-        response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
+        response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=${page}`);
         const data = await response.json()
         
-        const sortedResults = sortMovieResults(data.results, sort)
-        return sortedResults
+        // For search results, we need to sort client-side if not using default sort
+        let sortedResults = data.results;
+        if (sort !== 'popularity.desc') {
+            sortedResults = sortMovieResults(data.results, sort)
+        }
+        
+        return {
+            results: sortedResults,
+            totalPages: data.total_pages,
+            currentPage: data.page,
+            totalResults: data.total_results
+        }
     } else {
-        response = await fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&sort_by=${sort}`);
+        response = await fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&sort_by=${sort}&page=${page}`);
         const data = await response.json()
-        return data.results
+        return {
+            results: data.results,
+            totalPages: data.total_pages,
+            currentPage: data.page,
+            totalResults: data.total_results
+        }
     }
 }
 
@@ -73,7 +93,12 @@ export const getGenres = async () => {
 export const getMoviesByGenre = async (genreId, page = 1) => {
     const response = await fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=${page}`)
     const data = await response.json()
-    return data.results
+    return {
+        results: data.results,
+        totalPages: data.total_pages,
+        currentPage: data.page,
+        totalResults: data.total_results
+    }
 }
 
 // Helper function to get categories with posters - AI GENERATED

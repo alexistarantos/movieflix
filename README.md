@@ -1,26 +1,44 @@
-<img width="1477" height="908" alt="image" src="https://github.com/user-attachments/assets/8323a69b-bfc6-4cbb-9ae7-8139f793117f" />
+# MovieFlix
 
-# MOVIEFLIX
+A movie browsing app built with React and Vite. Browse popular movies, search, filter by genre, and save your favorites.
 
-# React + Vite
+## Features
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+-   Browse popular movies
+-   Search movies
+-   Filter by genres
+-   Sort by popularity, rating, release date, or title
+-   View movie details
+-   Save favorites (stored locally)
+-   Responsive pagination
 
-npm install
+## Setup
 
-&
+1. Clone the repository
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
+3. Get an API key from [TMDB](https://www.themoviedb.org/)
+4. Create a `.env` file in the root directory:
+    ```
+    VITE_TMDB_API_KEY=your_api_key_here
+    ```
+5. Run the development server:
+    ```bash
+    npm run dev
+    ```
 
-API Key from https://www.themoviedb.org/
+## Build
 
-Currently, two official plugins are available:
+```bash
+npm run build
+```
 
--   [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
--   [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+-   React 19
+-   Vite
+-   React Router
+-   SCSS
+-   TMDB API

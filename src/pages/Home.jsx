@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import '../css/Home.scss'
 import { getPopularMovies, getSortedMovies } from '../services/api'
 import GenresCarousel from '../components/GenresCarousel'
+import Pagination from '../components/Pagination'
 
 function Home() {
 
@@ -12,7 +13,10 @@ function Home() {
     const [movies, setMovies] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
-    const [sort, setSort] = useState('popular')
+    const [sort, setSort] = useState('popularity.desc')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
+    const [hasActiveFilters, setHasActiveFilters] = useState(false)
     const searchInputRef = useRef(null)
     const sortSelectRef = useRef(null)
 
@@ -20,23 +24,73 @@ function Home() {
         <LoadingMovieCard key={index} />
     ))
 
+    // Load movies when page changes or on initial load
     useEffect(() => {
-        const loadPopularMovies = async () => {
+        const loadMovies = async () => {
+            setLoading(true)
             try {
-                const popularMovies = await getPopularMovies()
-                setMovies(popularMovies)
+                const currentQuery = searchInputRef.current?.value || ''
+                const currentSort = sortSelectRef.current?.value || 'popularity.desc'
+                
+                let data
+                if (hasActiveFilters) {
+                    // Use filtered/sorted movies
+                    data = await getSortedMovies(currentSort, currentQuery, currentPage)
+                } else {
+                    // Use popular movies
+                    data = await getPopularMovies(currentPage)
+                }
+                
+                // Filter out movies without posters immediately
+                const moviesWithPosters = (data.results || []).filter((movie) => !!movie.poster_path)
+                
+                // Cap totalPages at 500 (TMDB API maximum)
+                let cappedTotalPages = Math.min(data.totalPages || 1, 500)
+                
+                // Handle empty results on last page - adjust totalPages if needed
+                if (moviesWithPosters.length === 0 && currentPage === cappedTotalPages && cappedTotalPages > 1) {
+                    // If we're on the last page and got no results, search backwards to find actual last page
+                    // Limit search to 50 pages back to avoid too many API calls
+                    const searchLimit = Math.max(1, cappedTotalPages - 50)
+                    let lastValidPage = 0
+                    
+                    for (let testPage = cappedTotalPages - 1; testPage >= searchLimit; testPage--) {
+                        let testData
+                        if (hasActiveFilters) {
+                            testData = await getSortedMovies(currentSort, currentQuery, testPage)
+                        } else {
+                            testData = await getPopularMovies(testPage)
+                        }
+                        const testMoviesWithPosters = (testData.results || []).filter((movie) => !!movie.poster_path)
+                        
+                        if (testMoviesWithPosters.length > 0) {
+                            lastValidPage = testPage
+                            break
+                        }
+                    }
+                    
+                    // If we found a valid last page and we're beyond it, redirect to that page
+                    if (lastValidPage > 0 && currentPage > lastValidPage) {
+                        setCurrentPage(lastValidPage)
+                        return // Exit early, this will trigger a new load with the correct page
+                    } else if (lastValidPage > 0) {
+                        cappedTotalPages = lastValidPage
+                    }
+                }
+                
+                setMovies(moviesWithPosters)
+                setTotalPages(cappedTotalPages)
                 setError(null)
             } catch (error) {
-                console.error('Error loading popular movies:', error)
+                console.error('Error loading movies:', error)
                 setError(error)
             } finally {
                 setLoading(false)
             }
         }
 
-        loadPopularMovies()
-
-    }, [])
+        loadMovies()
+    }, [currentPage, hasActiveFilters])
 
     const handleSearch = async (e) => {
         e.preventDefault()
@@ -48,49 +102,36 @@ function Home() {
             return
         }
         
-        setLoading(true)
         setPreviousSearchQuery(searchQuery.trim())
-
-        try {
-            const currentSort = sortSelectRef.current?.value || 'popularity.desc'
-            const searchedMovies = await getSortedMovies(currentSort, searchQuery)
-            setMovies(searchedMovies)
-            setError(null)
-
-            if (searchedMovies.length === 0) {
-                setError('No movies found')
-            }
-            
-        } catch (error) {
-            console.error('Failed to search movies:', error)
-            setError(error)
-        } finally {
-            setLoading(false)
-        }
-
+        setCurrentPage(1) // Reset to first page on new search
+        setHasActiveFilters(true) // Mark that we have active filters
     }
 
     const handleSortChange = async (e) => {
         if (loading) return 
 
-        setLoading(true)
+        setCurrentPage(1) // Reset to first page on sort change
+        const newSort = e.target.value
+        setSort(newSort)
+        
+        // Check if we have active filters (search query or non-default sort)
         const currentQuery = searchInputRef.current?.value || ''
+        const hasFilters = currentQuery.trim() !== '' || newSort !== 'popularity.desc'
+        setHasActiveFilters(hasFilters)
+    }
 
-        try {
-            const sortedMovies = await getSortedMovies(e.target.value, currentQuery)
-            setMovies(sortedMovies)
-            setError(null)
+    // Update hasActiveFilters when previousSearchQuery changes (after search is submitted)
+    // This handles the case when search is cleared and submitted
+    useEffect(() => {
+        const currentQuery = previousSearchQuery || ''
+        const currentSort = sortSelectRef.current?.value || 'popularity.desc'
+        const hasFilters = currentQuery.trim() !== '' || currentSort !== 'popularity.desc'
+        setHasActiveFilters(hasFilters)
+    }, [previousSearchQuery, sort])
 
-            if (sortedMovies.length === 0) {
-                setError('No movies found')
-            }
-            
-        } catch (error) {
-            console.error('Failed to sort movies:', error)
-            setError(error)
-        } finally {
-            setLoading(false)
-        }
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     return (
@@ -122,13 +163,24 @@ function Home() {
                     {loadingSkeletons}
                 </div>
             ) : (
-                <div className="movies-grid">
-                    {movies.filter((movie) => !!movie.poster_path)
-                        .map((movie) => (
-                            <MovieCard key={movie.id} movie={movie} />
-                        ))
-                    }
-                </div>
+                <>
+                    <div className="movies-grid">
+                        {movies && movies.length > 0 ? (
+                            movies.map((movie) => (
+                                <MovieCard key={movie.id} movie={movie} />
+                            ))
+                        ) : (
+                            <div className="no-movies-found">No movies found</div>
+                        )}
+                    </div>
+                    {totalPages > 1 && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    )}
+                </>
             )}
 
             
